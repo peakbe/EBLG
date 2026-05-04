@@ -1,4 +1,4 @@
-import { PROXY } from "./config.js";
+import { API_BASE } from "./config.js";
 
 const statusPanel = document.getElementById("status-panel");
 
