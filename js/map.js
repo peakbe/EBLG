@@ -2,6 +2,9 @@
 // MAP MODULE PRO+
 // =========================
 
+import { drawRunway, drawCorridor } from "./runways.js";
+import { initSonometers } from "./sonometers.js";
+
 let map = null;
 
 export function initMap() {
@@ -21,7 +24,7 @@ export function initMap() {
         map = L.map("map", {
             zoomControl: true,
             preferCanvas: true
-        }).setView([50.637, 5.443], 13);
+        }).setView([50.646, 5.463], 13);
 
         // Fond de carte
         L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
@@ -32,6 +35,13 @@ export function initMap() {
         // Layers piste active
         window.runwayLayer = L.layerGroup().addTo(map);
         window.corridorLayer = L.layerGroup().addTo(map);
+
+        // Dessin piste + corridor (par défaut piste 22)
+        drawRunway("22", window.runwayLayer);
+        drawCorridor("22", window.corridorLayer);
+
+        // Sonomètres
+        initSonometers(map);
 
         console.log("[MAP] Carte initialisée avec succès.");
         return map;
