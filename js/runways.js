@@ -1,12 +1,4 @@
-// ======================================================
-// RUNWAYS.JS — VERSION PRO+ EBLG
-// Piste 04/22 réaliste, calcul vent, crosswind,
-// dessin piste + corridor, panneau piste.
-// ======================================================
-
-// ------------------------------------------------------
-// Données piste EBLG (coordonnées réelles)
-// ------------------------------------------------------
+// public/js/runways.js
 
 export const RUNWAYS = {
     "22": {
@@ -32,6 +24,40 @@ export function getRunwayFromWind(windDir) {
     return n22 < n04 ? "22" : "04";
 }
 
+export function drawRunway(runwayId, layer) {
+    if (!layer || !window.L) return;
+    layer.clearLayers();
+
+    const rw = RUNWAYS[runwayId];
+    if (!rw) return;
+
+    window.L.polyline([rw.start, rw.end], {
+        color: "#00ff9c",
+        weight: 4
+    }).addTo(layer);
+}
+
+export function drawCorridor(runwayId, layer) {
+    if (!layer || !window.L) return;
+    layer.clearLayers();
+
+    const rw = RUNWAYS[runwayId];
+    if (!rw) return;
+
+    const offset = 0.01;
+    const p1 = [rw.start[0] + offset, rw.start[1] - offset];
+    const p2 = [rw.end[0] + offset, rw.end[1] - offset];
+    const p3 = [rw.end[0] - offset, rw.end[1] + offset];
+    const p4 = [rw.start[0] - offset, rw.start[1] + offset];
+
+    window.L.polygon([p1, p2, p3, p4], {
+        color: "#00ff9c",
+        weight: 1,
+        fillColor: "#00ff9c",
+        fillOpacity: 0.1
+    }).addTo(layer);
+}
+
 export function updateRunwayPanel(runway, windDir, windSpeed, crosswind = 0) {
     const el = document.getElementById("runway-active");
     if (!el) return;
@@ -40,78 +66,4 @@ export function updateRunwayPanel(runway, windDir, windSpeed, crosswind = 0) {
         Vent : ${windDir ?? "—"}° / ${windSpeed ?? "—"} kt<br>
         Crosswind : ${crosswind.toFixed(1)} kt
     `;
-}
-
-// ------------------------------------------------------
-// Dessin de la piste
-// ------------------------------------------------------
-export function drawRunway(runwayId = "22", layer) {
-    const rwy = RUNWAYS[runwayId];
-    if (!rwy || !layer) return;
-
-    layer.clearLayers();
-
-    // Axe principal
-    L.polyline([rwy.start, rwy.end], {
-        color: "#ffffff",
-        weight: 5,
-        opacity: 0.95
-    }).addTo(layer);
-
-    // Contour lumineux (effet ATC)
-    L.polyline([rwy.start, rwy.end], {
-        color: "#00ffc8",
-        weight: 9,
-        opacity: 0.25
-    }).addTo(layer);
-
-    // Marqueurs seuils
-    L.circleMarker(rwy.start, {
-        radius: 4,
-        color: "#00ffc8",
-        fillColor: "#00ffc8",
-        fillOpacity: 1
-    }).addTo(layer).bindTooltip("Seuil " + runwayId);
-
-    const opposite = runwayId === "22" ? "04" : "22";
-    L.circleMarker(rwy.end, {
-        radius: 4,
-        color: "#00ffc8",
-        fillColor: "#00ffc8",
-        fillOpacity: 1
-    }).addTo(layer).bindTooltip("Seuil " + opposite);
-}
-
-// ------------------------------------------------------
-// Corridor d'approche réaliste
-// ------------------------------------------------------
-export function drawCorridor(runwayId = "22", layer) {
-    const rwy = RUNWAYS[runwayId];
-    if (!rwy || !layer) return;
-
-    layer.clearLayers();
-
-    // Longueur corridor (NM)
-    const corridorLengthNm = 8;
-
-    // Conversion NM → degrés
-    const nmToDegLat = 1 / 60;
-    const nmToDegLon = 1 / (60 * Math.cos(rwy.start[0] * Math.PI / 180));
-
-    const headingRad = (rwy.heading * Math.PI) / 180;
-
-    const dxNm = Math.cos(headingRad) * corridorLengthNm;
-    const dyNm = Math.sin(headingRad) * corridorLengthNm;
-
-    const corridorEnd = [
-        rwy.start[0] + dyNm * nmToDegLat,
-        rwy.start[1] + dxNm * nmToDegLon
-    ];
-
-    L.polyline([corridorEnd, rwy.start], {
-        color: "#ff8800",
-        weight: 2,
-        dashArray: "6,4",
-        opacity: 0.8
-    }).addTo(layer);
 }
