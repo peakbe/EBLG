@@ -1,34 +1,87 @@
-import { API_BASE } from "./config.js";
+// ======================================================
+// STATUS PANEL — VERSION PRO+
+// Vérification API, couleurs ATC, logs propres.
+// ======================================================
 
+import { ENDPOINTS } from "./config.js";
+
+// ------------------------------------------------------
+// Logging PRO+
+// ------------------------------------------------------
+const IS_DEV = location.hostname.includes("localhost");
+const log = (...a) => IS_DEV && console.log("[STATUS]", ...a);
+const logErr = (...a) => console.error("[STATUS ERROR]", ...a);
+
+// ------------------------------------------------------
+// Vérification API
+// ------------------------------------------------------
 export async function checkApiStatus() {
-    const panel = document.getElementById("status-panel");
-    if (!panel) return;
+    log("Vérification statut API…");
 
-    const endpoints = [
-        { name: "CheckWX METAR", url: `${API_BASE}/metar` },
-        { name: "CheckWX TAF", url: `${API_BASE}/taf` },
-        { name: "OpenSky FIDS", url: `${API_BASE}/fids` },
-        { name: "Backend Render", url: `${API_BASE}/sonos` }
-    ];
+    const results = {
+        METAR: await ping(ENDPOINTS.metar),
+        TAF: await ping(ENDPOINTS.taf),
+        FIDS: await ping(ENDPOINTS.fids),
+        SONO: await ping(ENDPOINTS.sonometers)
+    };
 
-    panel.innerHTML = "";
+    updateStatusPanel(results);
+}
 
-    for (const ep of endpoints) {
-        const t0 = performance.now();
-        let status = "OK";
+// ------------------------------------------------------
+// Ping d’un endpoint
+// ------------------------------------------------------
+async function ping(url) {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 5000);
 
-        try {
-            const res = await fetch(ep.url);
-            if (!res.ok) status = "ERR";
-        } catch (e) {
-            status = "ERR";
-        }
+    try {
+        const res = await fetch(url, { signal: controller.signal });
+        clearTimeout(timeout);
 
-        const dt = Math.round(performance.now() - t0);
+        if (!res.ok) return "DOWN";
+        return "OK";
 
-        const div = document.createElement("div");
-        div.className = "status-item " + (status === "OK" ? "status-ok" : "status-error");
-        div.textContent = `${ep.name} — ${dt} ms`;
-        panel.appendChild(div);
+    } catch (err) {
+        logErr("Ping error:", url, err);
+        return "DOWN";
+    }
+}
+
+// ------------------------------------------------------
+// Mise à jour UI
+// ------------------------------------------------------
+export function updateStatusPanel(results) {
+    const el = document.getElementById("api-status");
+    if (!el) return;
+
+    el.innerHTML = `
+        <div class="status-row">
+            <span>METAR</span>
+            <span class="status-dot ${color(results.METAR)}"></span>
+        </div>
+        <div class="status-row">
+            <span>TAF</span>
+            <span class="status-dot ${color(results.TAF)}"></span>
+        </div>
+        <div class="status-row">
+            <span>FIDS</span>
+            <span class="status-dot ${color(results.FIDS)}"></span>
+        </div>
+        <div class="status-row">
+            <span>Sonomètres</span>
+            <span class="status-dot ${color(results.SONO)}"></span>
+        </div>
+    `;
+}
+
+// ------------------------------------------------------
+// Couleurs ATC
+// ------------------------------------------------------
+function color(state) {
+    switch (state) {
+        case "OK": return "green";
+        case "DOWN": return "red";
+        default: return "orange";
     }
 }
