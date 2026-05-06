@@ -10,9 +10,6 @@ const IS_DEV = location.hostname.includes("localhost");
 const log = (...a) => IS_DEV && console.log("[FIDS]", ...a);
 const logErr = (...a) => console.error("[FIDS ERROR]", ...a);
 
-// ------------------------------------------------------
-// Chargement sécurisé
-// ------------------------------------------------------
 export async function safeLoadFids() {
     try {
         await loadFids();
@@ -22,18 +19,12 @@ export async function safeLoadFids() {
     }
 }
 
-// ------------------------------------------------------
-// Chargement brut
-// ------------------------------------------------------
 export async function loadFids() {
     const data = await fetchJSON(ENDPOINTS.fids);
     updateFidsUI(data);
     updateStatusPanel("FIDS", data);
 }
 
-// ------------------------------------------------------
-// Mise à jour UI
-// ------------------------------------------------------
 export function updateFidsUI(data) {
     const el = document.getElementById("fids-list");
     if (!el) return;
