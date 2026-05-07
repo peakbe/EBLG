@@ -19,6 +19,10 @@ import { startLiveLogs } from "./logsLive.js";  // ✔ Harmonisé
 // ============================
 
 window.addEventListener("DOMContentLoaded", () => {
+
+    // *** CRITIQUE : initialisation de la carte ***
+    initMap();
+
     // Chargements initiaux
     safeLoadMetar();
     safeLoadTaf();
@@ -32,4 +36,3 @@ window.addEventListener("DOMContentLoaded", () => {
     setInterval(safeLoadFids, 60_000);
     setInterval(checkApiStatus, 30_000);
 });
-
